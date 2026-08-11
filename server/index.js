@@ -21,6 +21,7 @@ app.use(cors({
 }));
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
+app.get('/', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'admin.html')));
 
 // ── Admin Auth ─────────────────────────────────────────────────────────────
 function adminAuth(req, res, next) {
@@ -109,6 +110,8 @@ app.post('/api/keys/validate', async (req, res) => {
         expiresAt: expiresAt.toISOString(),
         remainingSeconds: Math.floor((expiresAt - now) / 1000),
         userName,
+        deviceCount: rec.device_count + 1,
+        maxDevices:  rec.max_devices,
       });
     }
 
@@ -144,6 +147,8 @@ app.post('/api/keys/validate', async (req, res) => {
         expiresAt: rec.expires_at,
         remainingSeconds: Math.floor((expiresAt - now) / 1000),
         userName,
+        deviceCount: rec.device_count,
+        maxDevices:  rec.max_devices,
       });
     }
 
@@ -159,15 +164,83 @@ app.post('/api/keys/validate', async (req, res) => {
   }
 });
 
+/** POST /api/keys/heartbeat */
+app.post('/api/keys/heartbeat', async (req, res) => {
+  const { key, deviceId, totalSeconds = 0, chatCount = 0, userName = 'User' } = req.body || {};
+
+  if (!key || !deviceId)
+    return res.json({ ok: false, message: 'Missing key or device ID.' });
+
+  const keyStr = String(key).trim().toUpperCase();
+  const devId  = String(deviceId).trim();
+
+  try {
+    const { rows } = await pool.query('SELECT id FROM keys WHERE key_string=$1', [keyStr]);
+    if (!rows.length) return res.json({ ok: false, message: 'Key not found.' });
+
+    const keyId = rows[0].id;
+
+    await pool.query(`
+      INSERT INTO key_sessions (key_id, key_string, device_id, user_name, session_start, last_seen, total_seconds, chat_count, is_online)
+      VALUES ($1, $2, $3, $4, NOW(), NOW(), $5, $6, true)
+      ON CONFLICT (key_id, device_id)
+      DO UPDATE SET last_seen=NOW(), total_seconds=$5, chat_count=$6, user_name=$4, is_online=true
+    `, [keyId, keyStr, devId, String(userName).slice(0, 64), parseInt(totalSeconds) || 0, parseInt(chatCount) || 0]);
+
+    return res.json({ ok: true });
+  } catch (e) {
+    console.error('[heartbeat]', e.message);
+    return res.json({ ok: false, message: 'Server error.' });
+  }
+});
+
+/** GET /api/keys/:key/activity */
+app.get('/api/keys/:key/activity', async (req, res) => {
+  const param = String(req.params.key || '').trim();
+  if (!param) return res.json({ ok: false, message: 'Missing key parameter.' });
+
+  try {
+    const { rows } = await pool.query(`
+      SELECT s.*, k.key_string, k.plan, k.status AS key_status
+      FROM key_sessions s
+      JOIN keys k ON s.key_id = k.id
+      WHERE k.key_string = $1 OR k.id::text = $1
+      ORDER BY s.last_seen DESC
+    `, [param.toUpperCase()]);
+
+    const now = Date.now();
+    const sessions = rows.map(r => ({
+      ...r,
+      is_online: r.last_seen && (now - new Date(r.last_seen).getTime()) < 90000,
+    }));
+
+    return res.json({ ok: true, sessions, activity: sessions });
+  } catch (e) {
+    console.error('[activity]', e.message);
+    return res.json({ ok: false, message: 'Server error.' });
+  }
+});
+
 // ══════════════════════════════════════════════════════════════════════════
 // ADMIN API  (password-protected, called by Netlify admin panel)
 // ══════════════════════════════════════════════════════════════════════════
 
 /** POST /api/keys/generate */
 app.post('/api/keys/generate', adminAuth, async (req, res) => {
-  const { plan, count = 1, maxDevices = 1, note = '' } = req.body;
+  const { plan, count = 1, maxDevices = 1, note = '', customDays = 0 } = req.body;
   if (!PLANS[plan])
     return res.json({ ok: false, error: `Invalid plan. Valid: ${Object.keys(PLANS).join(', ')}` });
+
+  // For custom plan, customDays must be a positive number
+  let durationMinutes = PLANS[plan].minutes;
+  let planLabel = PLANS[plan].label;
+  if (plan === 'custom') {
+    const days = parseFloat(customDays);
+    if (!days || days <= 0)
+      return res.json({ ok: false, error: 'customDays must be > 0 for custom plan.' });
+    durationMinutes = Math.round(days * 24 * 60);
+    planLabel = `Custom (${days}d)`;
+  }
 
   const n = Math.min(Math.max(parseInt(count) || 1, 1), 200);
   const keys = [];
@@ -186,16 +259,16 @@ app.post('/api/keys/generate', adminAuth, async (req, res) => {
 
       const { rows: ins } = await client.query(
         'INSERT INTO keys (key_string, plan, duration_minutes, max_devices, note) VALUES ($1,$2,$3,$4,$5) RETURNING id',
-        [k, plan, PLANS[plan].minutes, maxDevices, note]
+        [k, plan, durationMinutes, maxDevices, note]
       );
       await client.query(
         'INSERT INTO key_logs (key_id, key_string, action, note) VALUES ($1,$2,$3,$4)',
-        [ins[0].id, k, 'generated', `Plan:${plan} MaxDevices:${maxDevices}`]
+        [ins[0].id, k, 'generated', `Plan:${plan} Duration:${durationMinutes}min MaxDevices:${maxDevices}`]
       );
       keys.push(k);
     }
     await client.query('COMMIT');
-    res.json({ ok: true, keys, plan, planLabel: PLANS[plan].label });
+    res.json({ ok: true, keys, plan, planLabel });
   } catch (e) {
     await client.query('ROLLBACK');
     console.error('[generate]', e.message);
@@ -211,9 +284,14 @@ app.get('/api/keys', adminAuth, async (req, res) => {
     await autoExpire();
     const { rows } = await pool.query(`
       SELECT k.*,
-             STRING_AGG(kd.user_name || '|' || kd.device_id, ';;') AS device_list
+             STRING_AGG(DISTINCT kd.user_name || '|' || kd.device_id, ';;') AS device_list,
+             COALESCE(SUM(ks.total_seconds), 0)::INTEGER AS total_active_seconds,
+             COALESCE(SUM(ks.chat_count), 0)::INTEGER AS total_chat_count,
+             MAX(ks.last_seen) AS last_seen,
+             BOOL_OR(ks.is_online AND ks.last_seen > NOW() - INTERVAL '90 seconds') AS is_online
       FROM keys k
       LEFT JOIN key_devices kd ON k.id = kd.key_id
+      LEFT JOIN key_sessions ks ON k.id = ks.key_id
       GROUP BY k.id
       ORDER BY k.created_at DESC
     `);

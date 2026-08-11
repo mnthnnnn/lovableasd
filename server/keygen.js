@@ -11,6 +11,8 @@ const PLANS = {
   '3m':  { label: '3 Months',      minutes: 129_600    },
   '6m':  { label: '6 Months',      minutes: 259_200    },
   '1y':  { label: '1 Year',        minutes: 525_600    },
+  // 'custom' is a special sentinel — duration is supplied at generation time
+  custom: { label: 'Custom',       minutes: null       },
 };
 
 // ── Key Generation ─────────────────────────────────────────────────────────
