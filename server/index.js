@@ -32,7 +32,14 @@ function adminAuth(req, res, next) {
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 async function autoExpire() {
-  await pool.query("UPDATE keys SET status='expired' WHERE status='active' AND expires_at < NOW()");
+  try {
+    await pool.query("DELETE FROM key_devices WHERE key_id IN (SELECT id FROM keys WHERE status='expired' OR (expires_at IS NOT NULL AND expires_at < NOW()))");
+    await pool.query("DELETE FROM key_logs WHERE key_id IN (SELECT id FROM keys WHERE status='expired' OR (expires_at IS NOT NULL AND expires_at < NOW()))");
+    await pool.query("DELETE FROM key_sessions WHERE key_id IN (SELECT id FROM keys WHERE status='expired' OR (expires_at IS NOT NULL AND expires_at < NOW()))");
+    await pool.query("DELETE FROM keys WHERE status='expired' OR (expires_at IS NOT NULL AND expires_at < NOW())");
+  } catch (e) {
+    console.error('[autoExpire error]', e.message);
+  }
 }
 
 async function logAction(keyId, keyStr, action, adminName, note) {
@@ -121,9 +128,11 @@ app.post('/api/keys/validate', async (req, res) => {
       const expiresAt = new Date(rec.expires_at);
 
       if (now >= expiresAt) {
-        await pool.query("UPDATE keys SET status='expired' WHERE id=$1", [rec.id]);
-        await logAction(rec.id, keyStr, 'expired', null, 'Auto-expired on validate');
-        return res.json({ ok: false, status: 'expired', message: 'Your access key has expired. Please renew your plan.' });
+        await pool.query("DELETE FROM key_devices WHERE key_id=$1", [rec.id]);
+        await pool.query("DELETE FROM key_logs WHERE key_id=$1", [rec.id]);
+        await pool.query("DELETE FROM key_sessions WHERE key_id=$1", [rec.id]);
+        await pool.query("DELETE FROM keys WHERE id=$1", [rec.id]);
+        return res.json({ ok: false, status: 'expired', message: 'Your access key has expired.' });
       }
 
       // Register device if new
@@ -411,6 +420,7 @@ app.use(async (_req, _res, next) => {
     try {
       await initDb();
       dbInitialized = true;
+      setInterval(() => { autoExpire().catch(() => {}); }, 30_000);
     } catch (e) {
       console.error('DB init warning:', e.message);
     }
