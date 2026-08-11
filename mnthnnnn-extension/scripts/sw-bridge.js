@@ -175,8 +175,8 @@ chrome.alarms.onAlarm.addListener(async alarm => {
     await broadcastStatus(newStatus);
     // Stop injecting if no longer active
     if (newStatus !== 'active') {
-      // Revoked/invalid → wipe key from storage
-      if (newStatus === 'revoked' || newStatus === 'invalid') {
+      // Revoked/invalid/expired → wipe key from storage (auto logout)
+      if (newStatus === 'revoked' || newStatus === 'invalid' || newStatus === 'expired') {
         await chrome.storage.local.remove([SK.KEY, SK.STATUS, SK.PLAN, SK.PLAN_LABEL, SK.EXPIRES, SK.REMAINING, SK.USERNAME, SK.PAUSED_MSG]);
       }
     }
