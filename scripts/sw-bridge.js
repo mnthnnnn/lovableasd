@@ -4,8 +4,8 @@
  * Handles: active | paused | expired | revoked | invalid
  */
 
-// ── CONFIG — replace with your actual VPS URL ─────────────────────────────
-const VPS_URL       = 'http://YOUR_VPS_IP:3000'; // e.g. http://123.45.67.89:3000
+// ── CONFIG — Render backend URL ─────────────────────────────────────────────
+const VPS_URL       = 'https://mnthnnnn-s-extention.onrender.com';
 const VALIDATE_EP   = `${VPS_URL}/api/keys/validate`;
 
 // ── Storage keys ──────────────────────────────────────────────────────────

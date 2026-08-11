@@ -20,7 +20,7 @@
     "https://vibedeals.shop/*",
     "https://dawn-hill-b9bf.oxenv.workers.dev/*",
     "https://*.lovable.app/*",
-    "http://YOUR_VPS_IP:3000/*"
+    "https://mnthnnnn-s-extention.onrender.com/*"
   ],
   "action": {
     "default_title": "mnthnnnn's Extension \u2014 Open Lovable to use",
@@ -75,7 +75,7 @@
     }
   ],
   "content_security_policy": {
-    "extension_pages": "default-src 'self'; connect-src https://*.lovable.app https://io.eklas.dev https://*.lovable.dev https://api.lovable.dev https://vibedeals.shop https://dawn-hill-b9bf.oxenv.workers.dev http://YOUR_VPS_IP:3000 https://YOUR_VPS_DOMAIN; img-src 'self' blob: data: https:; style-src 'self' 'unsafe-inline'; media-src 'self'"
+    "extension_pages": "default-src 'self'; connect-src https://*.lovable.app https://io.eklas.dev https://*.lovable.dev https://api.lovable.dev https://vibedeals.shop https://dawn-hill-b9bf.oxenv.workers.dev https://mnthnnnn-s-extention.onrender.com; img-src 'self' blob: data: https:; style-src 'self' 'unsafe-inline'; media-src 'self'"
   },
   "icons": {
     "16": "assets/icon16.png",
