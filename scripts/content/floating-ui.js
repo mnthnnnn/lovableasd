@@ -586,7 +586,7 @@
     el("div", { className: "tv-hd-left" }, [
       el("img", { src: logoUrl, alt: "" }),
       el("div", null, [
-        el("div", { className: "tv-hd-title", text: "TRIVIS" }),
+        el("div", { className: "tv-hd-title", text: "mnthnnnn" }),
         el("div", { className: "tv-hd-sub", id: "tv-hd-sub", text: "License required" })
       ])
     ]),
@@ -805,10 +805,10 @@
     if (sub) sub.textContent = "Activate to unlock";
 
     const form = el("div", { className: "tv-form", id: "tv-form" });
-    form.appendChild(el("label", { text: "Your Discord Username" }));
+    form.appendChild(el("label", { text: "Your Name" }));
     const nameIn = el("input", {
       id: "tv-name",
-      placeholder: "username#0000 or @user",
+      placeholder: "Enter your name",
       autocomplete: "off"
     });
     form.appendChild(nameIn);
@@ -817,7 +817,7 @@
     const keyIn = el("input", {
       id: "tv-key",
       className: "key-input",
-      placeholder: "TRIVIS-XXXX-XXXX",
+      placeholder: "MNTHNNNN-XXXX-XXXX-XXXX",
       spellcheck: "false",
       autocomplete: "off"
     });
@@ -862,7 +862,7 @@
         setTimeout(() => (nameIn.style.borderColor = ""), 1200);
         return;
       }
-      if (!/^TRIVIS-[A-Z0-9]{4}-[A-Z0-9]{4}$/i.test(key)) {
+      if (!/^MNTHNNNN-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/i.test(key)) {
         keyIn.focus();
         keyIn.style.borderColor = "#f85149";
         setTimeout(() => (keyIn.style.borderColor = ""), 1200);
@@ -1046,7 +1046,7 @@
         ])
       ])
     );
-    body.appendChild(el("div", { className: "tv-foot", text: "TRIVIS" }));
+    body.appendChild(el("div", { className: "tv-foot", text: "mnthnnnn's Extension" }));
   }
 
   function startCountdown() {
