@@ -2,7 +2,9 @@ const { Pool } = require('pg');
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  // Render PostgreSQL requires SSL
+  // Render free tier doesn't support IPv6 — force IPv4
+  family: 4,
+  // Supabase / Render PostgreSQL require SSL
   ssl: process.env.DATABASE_URL
     ? { rejectUnauthorized: false }
     : false,
