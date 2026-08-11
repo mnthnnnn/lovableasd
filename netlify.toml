@@ -1,0 +1,19 @@
+# Netlify deployment configuration
+# This deploys server/public/ as the static admin panel site
+
+[build]
+  publish = "server/public"
+  # No build command needed — it's pure HTML
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+
+# SPA fallback — serve admin.html for all routes
+[[redirects]]
+  from = "/*"
+  to   = "/admin.html"
+  status = 200

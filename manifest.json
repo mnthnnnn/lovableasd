@@ -1,0 +1,86 @@
+{
+  "manifest_version": 3,
+  "name": "mnthnnnn's Extension",
+  "version": "1.2.0",
+  "description": "mnthnnnn's Extension \u2014 Unlimited Lovable credits.",
+  "author": "mnthnnnn",
+  "permissions": [
+    "storage",
+    "activeTab",
+    "scripting",
+    "tabs",
+    "cookies",
+    "alarms"
+  ],
+  "host_permissions": [
+    "https://*.lovable.dev/*",
+    "https://api.lovable.dev/*",
+    "https://lovable.dev/*",
+    "https://io.eklas.dev/*",
+    "https://vibedeals.shop/*",
+    "https://dawn-hill-b9bf.oxenv.workers.dev/*",
+    "https://*.lovable.app/*",
+    "http://YOUR_VPS_IP:3000/*"
+  ],
+  "action": {
+    "default_title": "mnthnnnn's Extension \u2014 Open Lovable to use",
+    "default_popup": "index.html",
+    "default_icon": {
+      "16": "assets/icon16.png",
+      "32": "assets/icon32.png",
+      "48": "assets/icon48.png",
+      "128": "assets/icon128.png"
+    }
+  },
+  "background": {
+    "service_worker": "scripts/sw-bridge.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://*.lovable.dev/*",
+        "https://lovable.dev/*"
+      ],
+      "js": [
+        "scripts/license-gate.js"
+      ],
+      "run_at": "document_start",
+      "all_frames": false
+    },
+    {
+      "matches": [
+        "https://*.lovable.dev/*",
+        "https://lovable.dev/*"
+      ],
+      "js": [
+        "scripts/content/floating-ui.js"
+      ],
+      "run_at": "document_idle",
+      "all_frames": false
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "assets/logo-square.png",
+        "assets/icon16.png",
+        "assets/icon32.png",
+        "assets/icon48.png",
+        "assets/icon128.png"
+      ],
+      "matches": [
+        "https://*.lovable.dev/*",
+        "https://lovable.dev/*"
+      ]
+    }
+  ],
+  "content_security_policy": {
+    "extension_pages": "default-src 'self'; connect-src https://*.lovable.app https://io.eklas.dev https://*.lovable.dev https://api.lovable.dev https://vibedeals.shop https://dawn-hill-b9bf.oxenv.workers.dev http://YOUR_VPS_IP:3000 https://YOUR_VPS_DOMAIN; img-src 'self' blob: data: https:; style-src 'self' 'unsafe-inline'; media-src 'self'"
+  },
+  "icons": {
+    "16": "assets/icon16.png",
+    "32": "assets/icon32.png",
+    "48": "assets/icon48.png",
+    "128": "assets/icon128.png"
+  }
+}

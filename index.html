@@ -1,0 +1,451 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>mnthnnnn's Extension</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet"/>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+    :root{
+      --bg:        #09090f;
+      --bg2:       #111120;
+      --bg3:       #1a1a30;
+      --border:    rgba(255,255,255,0.07);
+      --border2:   rgba(255,255,255,0.13);
+      --accent:    #7c3aed;
+      --accent2:   #a78bfa;
+      --glow:      rgba(124,58,237,0.35);
+      --green:     #10b981;
+      --amber:     #f59e0b;
+      --red:       #ef4444;
+      --text:      #f1f5f9;
+      --text2:     #94a3b8;
+      --text3:     #64748b;
+      --r:         12px;
+    }
+
+    html,body{
+      width:380px;
+      min-height:200px;
+      font-family:'Inter',sans-serif;
+      background:var(--bg);
+      color:var(--text);
+      font-size:14px;
+      line-height:1.5;
+      overflow-x:hidden;
+    }
+
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar{width:4px}
+    ::-webkit-scrollbar-track{background:transparent}
+    ::-webkit-scrollbar-thumb{background:#2a2a45;border-radius:2px}
+
+    /* ── Header ── */
+    .header{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding:14px 16px 12px;
+      border-bottom:1px solid var(--border);
+      background:var(--bg2);
+    }
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:8px;
+    }
+    .brand-logo{
+      width:26px;height:26px;
+      border-radius:6px;
+      object-fit:cover;
+    }
+    .brand-name{
+      font-size:13px;
+      font-weight:800;
+      background:linear-gradient(135deg,#a78bfa,#7c3aed);
+      -webkit-background-clip:text;
+      -webkit-text-fill-color:transparent;
+      background-clip:text;
+      letter-spacing:-.3px;
+    }
+    .header-badge{
+      font-size:10px;
+      font-weight:700;
+      padding:2px 8px;
+      border-radius:20px;
+      letter-spacing:.04em;
+      text-transform:uppercase;
+    }
+    .badge-active  {background:rgba(16,185,129,.15);color:var(--green);border:1px solid rgba(16,185,129,.3)}
+    .badge-paused  {background:rgba(245,158,11,.15);color:var(--amber);border:1px solid rgba(245,158,11,.3)}
+    .badge-expired {background:rgba(239,68,68,.15);color:var(--red);border:1px solid rgba(239,68,68,.3)}
+    .badge-inactive{background:rgba(124,58,237,.12);color:var(--accent2);border:1px solid rgba(124,58,237,.25)}
+
+    /* ── States ── */
+    [id^="state-"]{display:none}
+
+    /* ── Loading ── */
+    #state-loading{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:40px 20px;
+      flex-direction:column;
+      gap:12px;
+    }
+    .spinner-ring{
+      width:28px;height:28px;
+      border:2.5px solid rgba(124,58,237,.2);
+      border-top-color:var(--accent);
+      border-radius:50%;
+      animation:spin .75s linear infinite;
+    }
+    @keyframes spin{to{transform:rotate(360deg)}}
+    #state-loading p{font-size:12px;color:var(--text3)}
+
+    /* ── Login ── */
+    #state-login{padding:20px 16px 16px}
+
+    .welcome-text{
+      text-align:center;
+      margin-bottom:20px;
+    }
+    .welcome-text h2{
+      font-size:17px;
+      font-weight:800;
+      color:var(--text);
+      margin-bottom:4px;
+    }
+    .welcome-text p{font-size:12px;color:var(--text2)}
+
+    .form-group{margin-bottom:13px}
+    label{
+      display:block;
+      font-size:11px;
+      font-weight:700;
+      color:var(--text3);
+      text-transform:uppercase;
+      letter-spacing:.06em;
+      margin-bottom:5px;
+    }
+    input[type=text],input[type=password]{
+      width:100%;
+      background:var(--bg3);
+      border:1px solid var(--border);
+      border-radius:8px;
+      color:var(--text);
+      font-family:'Inter',sans-serif;
+      font-size:13px;
+      padding:9px 12px;
+      outline:none;
+      transition:border-color .2s,box-shadow .2s;
+    }
+    input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--glow)}
+    input::placeholder{color:var(--text3)}
+    input.key-field{font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.05em;text-transform:uppercase}
+
+    /* ── Buttons ── */
+    .btn{
+      display:inline-flex;align-items:center;justify-content:center;gap:6px;
+      width:100%;
+      padding:10px 14px;
+      border:none;border-radius:8px;
+      font-family:'Inter',sans-serif;font-size:13px;font-weight:700;
+      cursor:pointer;transition:all .2s;
+    }
+    .btn:disabled{opacity:.5;cursor:not-allowed}
+    .btn-primary{
+      background:linear-gradient(135deg,var(--accent),#6d28d9);
+      color:#fff;
+      box-shadow:0 4px 16px rgba(124,58,237,.4);
+    }
+    .btn-primary:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 6px 22px rgba(124,58,237,.55)}
+    .btn-ghost{
+      background:rgba(255,255,255,.05);
+      color:var(--text2);
+      border:1px solid var(--border);
+      font-size:12px;
+      padding:7px 12px;
+    }
+    .btn-ghost:hover:not(:disabled){background:rgba(255,255,255,.09);color:var(--text)}
+    .btn-danger-soft{
+      background:rgba(239,68,68,.1);
+      color:var(--red);
+      border:1px solid rgba(239,68,68,.2);
+      font-size:12px;
+      padding:7px 12px;
+    }
+    .btn-danger-soft:hover{background:rgba(239,68,68,.18)}
+
+    /* ── Message ── */
+    .msg{
+      font-size:12px;color:var(--text3);
+      text-align:center;margin-top:10px;min-height:18px;
+      transition:color .2s;
+    }
+    .msg.ok {color:var(--green)}
+    .msg.err{color:var(--red)}
+
+    /* ── Active ── */
+    #state-active{padding:0 0 14px}
+
+    .active-hero{
+      padding:20px 16px 16px;
+      text-align:center;
+      background:linear-gradient(180deg,rgba(124,58,237,.12) 0%,transparent 100%);
+      border-bottom:1px solid var(--border);
+      position:relative;
+      overflow:hidden;
+    }
+    .active-hero::before{
+      content:'';
+      position:absolute;
+      top:-40px;left:50%;transform:translateX(-50%);
+      width:200px;height:100px;
+      background:radial-gradient(ellipse,rgba(124,58,237,.3),transparent 70%);
+      pointer-events:none;
+    }
+    .active-plan-badge{
+      display:inline-flex;
+      align-items:center;
+      gap:5px;
+      background:rgba(124,58,237,.18);
+      border:1px solid rgba(124,58,237,.3);
+      color:var(--accent2);
+      padding:4px 12px;
+      border-radius:20px;
+      font-size:11px;
+      font-weight:700;
+      text-transform:uppercase;
+      letter-spacing:.06em;
+      margin-bottom:12px;
+    }
+    .countdown-wrap{
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      margin-bottom:6px;
+    }
+    .countdown-label{font-size:11px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;letter-spacing:.06em}
+    #countdown{
+      font-family:'JetBrains Mono',monospace;
+      font-size:24px;
+      font-weight:600;
+      color:var(--green);
+      letter-spacing:.04em;
+      transition:color .5s;
+    }
+    #countdown.warning{color:var(--amber)}
+    #countdown.urgent{color:var(--red);animation:urgentPulse 1s ease infinite}
+    @keyframes urgentPulse{0%,100%{opacity:1}50%{opacity:.6}}
+
+    .active-meta{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:10px;
+      padding:14px 16px;
+      border-bottom:1px solid var(--border);
+    }
+    .meta-item{
+      background:var(--bg2);
+      border:1px solid var(--border);
+      border-radius:8px;
+      padding:10px 12px;
+    }
+    .meta-label{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
+    .meta-val{font-size:12px;color:var(--text);font-weight:600;word-break:break-word}
+
+    .active-footer{
+      padding:10px 16px 0;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:8px;
+    }
+    .status-dot{
+      display:inline-block;
+      width:7px;height:7px;
+      border-radius:50%;
+      background:var(--green);
+      box-shadow:0 0 8px rgba(16,185,129,.7);
+      animation:dotPulse 2s ease infinite;
+    }
+    @keyframes dotPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.6;transform:scale(.85)}}
+    .status-text{font-size:12px;color:var(--text2);display:flex;align-items:center;gap:6px}
+
+    /* ── Paused ── */
+    #state-paused{padding:24px 16px;text-align:center}
+    .status-icon{font-size:36px;margin-bottom:12px;display:block}
+    .status-heading{font-size:16px;font-weight:800;color:var(--text);margin-bottom:8px}
+    .status-body{font-size:12px;color:var(--text2);line-height:1.6;margin-bottom:18px}
+    .paused-box{
+      background:rgba(245,158,11,.08);
+      border:1px solid rgba(245,158,11,.2);
+      border-radius:8px;
+      padding:12px;
+      font-size:12px;
+      color:var(--amber);
+      line-height:1.55;
+      margin-bottom:16px;
+    }
+
+    /* ── Expired ── */
+    #state-expired{padding:24px 16px;text-align:center}
+    .expired-box{
+      background:rgba(239,68,68,.08);
+      border:1px solid rgba(239,68,68,.2);
+      border-radius:8px;
+      padding:12px;
+      font-size:12px;
+      color:var(--red);
+      line-height:1.55;
+      margin-bottom:16px;
+    }
+
+    /* ── Revoked (goes back to login automatically) ── */
+    #state-revoked{padding:24px 16px;text-align:center}
+
+    /* ── Footer ── */
+    .footer{
+      padding:8px 16px;
+      border-top:1px solid var(--border);
+      background:var(--bg2);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+    .footer-text{font-size:10px;color:var(--text3)}
+
+    /* ── Animations ── */
+    @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+    #state-login,#state-active,#state-paused,#state-expired{animation:fadeIn .25s ease}
+  </style>
+</head>
+<body>
+
+<!-- ════════════════ HEADER ════════════════ -->
+<div class="header">
+  <div class="brand">
+    <img class="brand-logo" src="assets/logo-square.png" alt="mnthnnnn"/>
+    <span class="brand-name">mnthnnnn's Extension</span>
+  </div>
+  <span class="header-badge badge-inactive" id="header-badge">Inactive</span>
+</div>
+
+<!-- ════════════════ LOADING ════════════════ -->
+<div id="state-loading">
+  <div class="spinner-ring"></div>
+  <p>Checking license…</p>
+</div>
+
+<!-- ════════════════ LOGIN ════════════════ -->
+<div id="state-login">
+  <div class="welcome-text">
+    <h2>Activate Your License</h2>
+    <p>Enter your name and license key to unlock access.</p>
+  </div>
+
+  <div class="form-group">
+    <label>Your Name</label>
+    <input type="text" id="name-input" placeholder="Enter your name…"/>
+  </div>
+  <div class="form-group">
+    <label>License Key</label>
+    <input type="text" id="key-input" class="key-field" placeholder="MNTHNNNN-XXXX-XXXX-XXXX"/>
+  </div>
+
+  <button class="btn btn-primary" id="activate-btn">Activate</button>
+  <div class="msg" id="login-msg"></div>
+</div>
+
+<!-- ════════════════ ACTIVE ════════════════ -->
+<div id="state-active">
+  <div class="active-hero">
+    <div class="active-plan-badge">⚡ <span id="active-plan">Active</span></div>
+    <div class="countdown-wrap">
+      <div class="countdown-label">Time Remaining</div>
+      <div id="countdown">—</div>
+    </div>
+  </div>
+
+  <div class="active-meta">
+    <div class="meta-item">
+      <div class="meta-label">User</div>
+      <div class="meta-val" id="active-user">—</div>
+    </div>
+    <div class="meta-item">
+      <div class="meta-label">Expires</div>
+      <div class="meta-val" id="active-expiry" style="font-size:11px">—</div>
+    </div>
+  </div>
+
+  <div class="active-footer">
+    <div class="status-text">
+      <span class="status-dot"></span>
+      Extension active on Lovable
+    </div>
+    <button class="btn btn-ghost" style="width:auto" id="logout-btn">Sign Out</button>
+  </div>
+</div>
+
+<!-- ════════════════ PAUSED ════════════════ -->
+<div id="state-paused">
+  <span class="status-icon">⏸️</span>
+  <div class="status-heading">Subscription Paused</div>
+  <div class="paused-box" id="paused-msg">
+    This subscription has been stopped by Admin. Contact support to resume.
+  </div>
+  <div class="status-body">Your remaining time is preserved.<br>Contact support to resume your plan.</div>
+  <button class="btn btn-ghost" style="width:auto;margin:0 auto;display:flex" id="logout-btn-2">Back to Login</button>
+</div>
+
+<!-- ════════════════ EXPIRED ════════════════ -->
+<div id="state-expired">
+  <span class="status-icon">⌛</span>
+  <div class="status-heading">License Expired</div>
+  <div class="expired-box">
+    Your access key has expired.<br>Please renew your plan to continue.
+  </div>
+  <button class="btn btn-ghost" style="width:auto;margin:0 auto;display:flex" id="logout-btn-3">Enter New Key</button>
+</div>
+
+<!-- ════════════════ REVOKED (auto-redirects to login) ════════════════ -->
+<div id="state-revoked">
+  <span class="status-icon">⛔</span>
+  <div class="status-heading">Key Revoked</div>
+  <div class="status-body">This key has been revoked.<br>Please contact support.</div>
+</div>
+
+<!-- ════════════════ FOOTER ════════════════ -->
+<div class="footer">
+  <span class="footer-text">mnthnnnn's Extension · Open lovable.dev to use</span>
+</div>
+
+<script>
+// Update header badge based on visible state
+(function() {
+  const badge = document.getElementById('header-badge');
+  const observer = new MutationObserver(() => {
+    const s = ['active','paused','expired','revoked','login'].find(
+      id => document.getElementById('state-'+id)?.style.display !== 'none'
+    );
+    const map = {
+      active:  ['badge-active',  '● Active'],
+      paused:  ['badge-paused',  '⏸ Paused'],
+      expired: ['badge-expired', '✕ Expired'],
+      revoked: ['badge-expired', '⊘ Revoked'],
+      login:   ['badge-inactive','○ Inactive'],
+    };
+    const [cls,text] = map[s] || ['badge-inactive','○ Inactive'];
+    badge.className = 'header-badge '+cls;
+    badge.textContent = text;
+  });
+  observer.observe(document.body, { childList:true, subtree:true, attributes:true, attributeFilter:['style'] });
+})();
+</script>
+<script src="scripts/popup-license.js"></script>
+</body>
+</html>
