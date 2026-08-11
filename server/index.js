@@ -11,7 +11,7 @@ const { generateKey, PLANS } = require('./keygen');
 
 const app            = express();
 const PORT           = process.env.PORT          || 3000;
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'change_me_now';
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || '123';
 
 // ── Middleware ─────────────────────────────────────────────────────────────
 app.use(cors({
@@ -405,16 +405,33 @@ app.get('/api/keys/:id/logs', adminAuth, async (req, res) => {
 /** GET /api/plans */
 app.get('/api/plans', (_req, res) => res.json({ ok: true, plans: PLANS }));
 
-// ── Start ──────────────────────────────────────────────────────────────────
-(async () => {
-  try {
-    await initDb();
-    app.listen(PORT, () => {
-      console.log(`\n✅  mnthnnnn Key Server  →  http://localhost:${PORT}`);
-      console.log(`🔑  Admin panel         →  http://localhost:${PORT}/admin.html\n`);
-    });
-  } catch (e) {
-    console.error('❌ Failed to start:', e.message);
-    process.exit(1);
+let dbInitialized = false;
+app.use(async (_req, _res, next) => {
+  if (!dbInitialized) {
+    try {
+      await initDb();
+      dbInitialized = true;
+    } catch (e) {
+      console.error('DB init warning:', e.message);
+    }
   }
-})();
+  next();
+});
+
+module.exports = app;
+
+if (require.main === module) {
+  (async () => {
+    try {
+      await initDb();
+      dbInitialized = true;
+      app.listen(PORT, () => {
+        console.log(`\n✅  mnthnnnn Key Server  →  http://localhost:${PORT}`);
+        console.log(`🔑  Admin panel         →  http://localhost:${PORT}/admin.html\n`);
+      });
+    } catch (e) {
+      console.error('❌ Failed to start:', e.message);
+      process.exit(1);
+    }
+  })();
+}
