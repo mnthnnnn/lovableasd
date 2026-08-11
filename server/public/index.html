@@ -233,18 +233,33 @@ tr:last-child td{border-bottom:none}
 @keyframes spin{to{transform:rotate(360deg)}}
 .spinner{width:15px;height:15px;border:2px solid rgba(255,255,255,.15);border-top-color:#fff;
   border-radius:50%;animation:spin .7s linear infinite;display:inline-block}
-/* ── Responsive ── */
-@media(max-width:640px){
-  .main{padding:14px 12px 40px}
-  .topnav{padding:10px 14px}
+/* ── Preset Pills ── */
+.preset-pills{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.pill-btn{background:var(--bg3);border:1px solid var(--border);color:var(--text2);
+  padding:5px 12px;border-radius:20px;font-size:11.5px;font-weight:600;cursor:pointer;
+  transition:all .15s;user-select:none;touch-action:manipulation}
+.pill-btn:hover{border-color:var(--accent);color:var(--accent3)}
+.pill-btn.active{background:rgba(124,58,237,0.22);border-color:var(--accent);color:#fff;box-shadow:0 0 12px rgba(124,58,237,0.35)}
+
+/* ── Mobile & Touch Responsive ── */
+@media(max-width:768px){
+  .main{padding:12px 10px 50px}
+  .topnav{padding:10px 12px}
   .gen-grid{grid-template-columns:1fr 1fr}
-  .stats-grid{grid-template-columns:repeat(3,1fr)}
-  .search-box{width:100%}
-  .table-toolbar{gap:6px}
+  .stats-grid{grid-template-columns:repeat(3,1fr);gap:8px}
+  .stat-card{padding:12px 14px}
+  .stat-val{font-size:22px}
+  .search-box,.filter-select{width:100%!important}
+  .table-toolbar{width:100%;flex-direction:column;align-items:stretch;gap:8px}
+  .btn{min-height:38px;justify-content:center}
+  .actions-cell{gap:6px}
+  .actions-cell .btn{min-height:32px;padding:4px 10px}
 }
-@media(max-width:420px){
+@media(max-width:480px){
+  .gen-grid{grid-template-columns:1fr}
   .stats-grid{grid-template-columns:repeat(2,1fr)}
-  .login-card{width:95vw;padding:28px 20px}
+  .login-card{width:94vw;padding:24px 16px}
+  .nav-brand{font-size:14px}
 }
 </style>
 </head>
@@ -338,6 +353,14 @@ tr:last-child td{border-bottom:none}
               <option value="1y">1 Year</option>
               <option value="custom">⚙ Custom Days</option>
             </select>
+            <div class="preset-pills">
+              <button type="button" class="pill-btn active" onclick="selectPresetPlan('7d')">7 Days</button>
+              <button type="button" class="pill-btn" onclick="selectPresetPlan('1d')">1 Day</button>
+              <button type="button" class="pill-btn" onclick="selectPresetPlan('3d')">3 Days</button>
+              <button type="button" class="pill-btn" onclick="selectPresetPlan('1m')">1 Month</button>
+              <button type="button" class="pill-btn" onclick="selectPresetPlan('1y')">1 Year</button>
+              <button type="button" class="pill-btn" onclick="selectPresetPlan('trial')">Trial</button>
+            </div>
           </div>
           <div class="form-group" style="margin:0" id="custom-days-row">
             <label>Custom Duration (days)</label>
@@ -849,6 +872,14 @@ async function bulkAction(action) {
 }
 
 /* ── Custom Days Toggle ── */
+function selectPresetPlan(plan) {
+  const sel = document.getElementById('gen-plan');
+  sel.value = plan;
+  onPlanChange();
+  document.querySelectorAll('.pill-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.getAttribute('onclick').includes(`'${plan}'`));
+  });
+}
 function onPlanChange() {
   const plan = document.getElementById('gen-plan').value;
   document.getElementById('custom-days-row').style.display = plan === 'custom' ? '' : 'none';
