@@ -302,7 +302,6 @@ tr:last-child td{border-bottom:none}
     <div class="nav-right">
       <span class="nav-badge" id="key-count-badge">0 Keys</span>
       <button class="btn btn-ghost btn-sm" onclick="refreshAll()">↻ Refresh</button>
-      <button class="btn btn-ghost btn-sm" onclick="resetApiUrl()" title="Change server URL">⚙ API URL</button>
       <button class="btn btn-danger btn-sm" onclick="doLogout()">Sign Out</button>
     </div>
   </nav>
@@ -392,7 +391,6 @@ tr:last-child td{border-bottom:none}
         <span class="bulk-count" id="bulk-count">0 selected</span>
         <button class="btn btn-warning btn-sm" onclick="bulkAction('pause')">⏸ Pause</button>
         <button class="btn btn-success btn-sm" onclick="bulkAction('resume')">▶ Resume</button>
-        <button class="btn btn-danger btn-sm" onclick="bulkAction('revoke')">⊘ Revoke</button>
         <button class="btn btn-danger btn-sm" onclick="bulkAction('delete')">🗑 Delete</button>
         <button class="btn btn-ghost btn-sm" onclick="clearSelection()">✕ Clear</button>
       </div>
@@ -406,7 +404,6 @@ tr:last-child td{border-bottom:none}
               <th data-col="plan">Plan <i class="sort-icon">↕</i></th>
               <th data-col="status">Status <i class="sort-icon">↕</i></th>
               <th data-col="device_count">Devices <i class="sort-icon">↕</i></th>
-              <th data-col="total_active_seconds">Activity <i class="sort-icon">↕</i></th>
               <th data-col="created_at">Created <i class="sort-icon">↕</i></th>
               <th data-col="activated_at">Activated <i class="sort-icon">↕</i></th>
               <th data-col="expires_at">Expires / Left <i class="sort-icon">↕</i></th>
@@ -778,7 +775,6 @@ function rowHTML(k) {
     <td><span class="plan-badge">${planLabel}</span></td>
     <td>${statusBadge}</td>
     <td style="color:var(--text);font-weight:600">${k.device_count}/${k.max_devices}</td>
-    <td>${activityHtml}</td>
     <td>${fmtDate(k.created_at)}</td>
     <td>${k.activated_at ? fmtDate(k.activated_at) : '<span style="color:var(--text3)">—</span>'}</td>
     <td>${remaining}</td>
@@ -791,11 +787,9 @@ function buildActions(k) {
   if (k.status === 'active') {
     h += `<button class="btn btn-sm btn-warning" onclick="openPause(${k.id})">⏸</button>`;
     h += `<button class="btn btn-sm btn-indigo" onclick="openExtend(${k.id})">+Days</button>`;
-    h += `<button class="btn btn-sm btn-danger" onclick="doRevoke(${k.id},'${k.key_string}')">⊘</button>`;
   } else if (k.status === 'paused') {
     h += `<button class="btn btn-sm btn-success" onclick="doResume(${k.id})">▶</button>`;
     h += `<button class="btn btn-sm btn-indigo" onclick="openExtend(${k.id})">+Days</button>`;
-    h += `<button class="btn btn-sm btn-danger" onclick="doRevoke(${k.id},'${k.key_string}')">⊘</button>`;
   } else if (k.status === 'inactive') {
     h += `<button class="btn btn-sm btn-indigo" onclick="openExtend(${k.id})">Activate</button>`;
     h += `<button class="btn btn-sm btn-danger" onclick="doDelete(${k.id})">🗑</button>`;
@@ -1114,8 +1108,8 @@ function toast(msg, ok = true) {
   }
 })();
 
-// Live countdown refresh every 30s
-setInterval(() => { if (allKeys.length) renderTable(); }, 30_000);
+// Live real-time auto-refresh every 5 seconds
+setInterval(() => { if (adminPw) refreshAll(); }, 5_000);
 </script>
 </body>
 </html>
