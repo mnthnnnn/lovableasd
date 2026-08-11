@@ -424,6 +424,7 @@ tr:last-child td{border-bottom:none}
             <tr>
               <th class="no-sort" style="width:36px"><input type="checkbox" id="select-all" class="row-check" onchange="toggleSelectAll()"/></th>
               <th data-col="key_string">Key <i class="sort-icon">↕</i></th>
+              <th data-col="device_list">User Name <i class="sort-icon">↕</i></th>
               <th data-col="plan">Plan <i class="sort-icon">↕</i></th>
               <th data-col="status">Status <i class="sort-icon">↕</i></th>
               <th data-col="device_count">Devices <i class="sort-icon">↕</i></th>
@@ -763,6 +764,14 @@ function fmtDurationSec(secs) {
 }
 
 function rowHTML(k) {
+  let userNameDisplay = '<span style="color:var(--text3)">—</span>';
+  if (k.device_list) {
+    const names = k.device_list.split(';;').map(e => e.split('|')[0]).filter(Boolean);
+    if (names.length) {
+      userNameDisplay = `<span style="color:var(--accent3);font-weight:600">👤 ${names.join(', ')}</span>`;
+    }
+  }
+
   const statusBadge = {
     active:  '<span class="badge badge-active">● Active</span>',
     paused:  '<span class="badge badge-paused">⏸ Paused</span>',
@@ -784,18 +793,11 @@ function rowHTML(k) {
     ? `<span class="time-gray">${fmtDate(k.expires_at)}</span>`
     : '<span class="time-gray">—</span>';
 
-  const isOnline = k.is_online || (k.last_seen && (Date.now() - new Date(k.last_seen).getTime()) < 90000);
-  const onlineDot = isOnline ? '<span title="Online" style="color:var(--green)">🟢</span>' : '<span title="Offline" style="color:var(--text3)">🔴</span>';
-  const timeWorked = fmtDurationSec(k.total_active_seconds || 0);
-  const chatCount = k.total_chat_count || 0;
-  const activityHtml = `<div style="font-size:12px;cursor:pointer;display:inline-flex;align-items:center;gap:4px" onclick="viewSessions(${k.id},'${k.key_string}')" title="Click to view sessions">
-    ${onlineDot} <b>${timeWorked}</b> <span style="font-size:11px;color:var(--text3)">(${chatCount}💬)</span>
-  </div>`;
-
   const checked = selectedIds.has(k.id) ? 'checked' : '';
   return `<tr>
     <td><input type="checkbox" class="row-check" data-id="${k.id}" ${checked} onchange="onRowCheck(this)"/></td>
     <td><div class="key-mono">${k.key_string}<button class="copy-btn" title="Copy" onclick="copyKey(this,'${k.key_string}')">⎘</button></div></td>
+    <td>${userNameDisplay}</td>
     <td><span class="plan-badge">${planLabel}</span></td>
     <td>${statusBadge}</td>
     <td style="color:var(--text);font-weight:600">${k.device_count}/${k.max_devices}</td>
@@ -927,7 +929,7 @@ function downloadKeys() {
 <script>
 /* ── CSV Export ── */
 function exportCSV() {
-  const cols = ['key_string','plan','status','device_count','max_devices','created_at','activated_at','expires_at','note'];
+  const cols = ['key_string','device_list','plan','status','device_count','max_devices','created_at','activated_at','expires_at','note'];
   const header = cols.join(',');
   const rows = filteredKeys.map(k =>
     cols.map(c => {
